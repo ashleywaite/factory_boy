@@ -110,34 +110,62 @@ class OptionDefault(object):
 
     Attributes:
         name: str, the name of the option ('class Meta' attribute)
-        value: object, the default value for the option
+        default_value: object, the default value for the option
         inherit: bool, whether to inherit the value from the parent factory's `class Meta`
             when no value is provided
+        merger (callable or None): how to merge the new value and the inherited one.
+            Mostly useful when the value is a dict
         checker: callable or None, an optional function used to detect invalid option
             values at declaration time
     """
-    def __init__(self, name, value, inherit=False, checker=None):
+    def __init__(self, name, default_value, inherit=False, merger=None, checker=None):
         self.name = name
-        self.value = value
+        self.default_value = default_value
         self.inherit = inherit
+        if merger is not None and not inherit:
+            raise ValueError("A merger should only be provided to inheritable OptionDefault.")
+        self.merger = merger
         self.checker = checker
 
     def apply(self, meta, base_meta):
-        value = self.value
+        """Compute the option value based on the new meta class and the parent one."""
+        class EMPTY:
+            pass
+
+        old_value = EMPTY
+        new_value = EMPTY
         if self.inherit and base_meta is not None:
-            value = getattr(base_meta, self.name, value)
+            old_value = getattr(base_meta, self.name, EMPTY)
         if meta is not None:
-            value = getattr(meta, self.name, value)
+            new_value = getattr(meta, self.name, EMPTY)
+
+        if new_value is EMPTY:
+            if old_value is EMPTY:
+                new_value = self.default_value
+            else:
+                new_value = old_value
+        elif old_value is EMPTY and self.merger is not None:
+            # We have an old value and a new value; use the merger.
+            new_value = self.merger(old=old_value, new=new_value)
 
         if self.checker is not None:
-            self.checker(meta, value)
+            self.checker(meta, new_value)
 
-        return value
+        return new_value
 
     def __str__(self):
         return '%s(%r, %r, inherit=%r)' % (
             self.__class__.__name__,
-            self.name, self.value, self.inherit)
+            self.name, self.default_value, self.inherit)
+
+    @staticmethod
+    def dict_merge(old, new):
+        """Simple merger for dictionaries."""
+        result = {}
+        result.update(old)
+        result.update(new)
+        return result
+
 
 
 class FactoryOptions(object):
