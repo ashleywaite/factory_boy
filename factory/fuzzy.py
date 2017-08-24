@@ -21,6 +21,8 @@ random_seed_warning = (
     "see https://github.com/FactoryBoy/factory_boy/issues/331"
 )
 
+DEFAULT_LOW = -10000000
+DEFAULT_HIGH = 10000000
 
 def get_random_state():
     warnings.warn(
@@ -151,11 +153,7 @@ class FuzzyChoice(BaseFuzzyAttribute):
 class FuzzyInteger(BaseFuzzyAttribute):
     """Random integer within a given range."""
 
-    def __init__(self, low, high=None, step=1, **kwargs):
-        if high is None:
-            high = low
-            low = 0
-
+    def __init__(self, low=DEFAULT_LOW, high=DEFAULT_HIGH, step=1, **kwargs):
         self.low = low
         self.high = high
         self.step = step
@@ -169,11 +167,7 @@ class FuzzyInteger(BaseFuzzyAttribute):
 class FuzzyDecimal(BaseFuzzyAttribute):
     """Random decimal within a given range."""
 
-    def __init__(self, low, high=None, precision=2, **kwargs):
-        if high is None:
-            high = low
-            low = 0.0
-
+    def __init__(self, low=DEFAULT_LOW, high=DEFAULT_HIGH, precision=2, **kwargs):
         self.low = low
         self.high = high
         self.precision = precision
@@ -188,11 +182,7 @@ class FuzzyDecimal(BaseFuzzyAttribute):
 class FuzzyFloat(BaseFuzzyAttribute):
     """Random float within a given range."""
 
-    def __init__(self, low, high=None, **kwargs):
-        if high is None:
-            high = low
-            low = 0
-
+    def __init__(self, low=DEFAULT_LOW, high=DEFAULT_HIGH, **kwargs):
         self.low = low
         self.high = high
 
