@@ -360,8 +360,14 @@ class FactoryOptions(object):
             field_names = set()
             if self.default_auto_fields:
                 field_names.update(self.introspector.get_default_field_names(self.model))
-            field_names.update(self.include_auto_fields)
 
+            # Apply auto_fields_include/exclude from inheritance chain
+            factory_parents = [f for f in reversed(self.factory.__mro__[1:]) if hasattr(f, '_meta')]
+            for parent in factory_parents:
+                field_names.update(getattr(parent._meta, 'include_auto_fields', []))
+                field_names.difference_update(getattr(parent._meta, 'exclude_auto_fields', []))
+
+            field_names.update(self.include_auto_fields)
             exclude_auto_fields = set(self.base_declarations.keys())
             exclude_auto_fields.update(self.exclude_auto_fields)
             field_names.difference_update(exclude_auto_fields)
