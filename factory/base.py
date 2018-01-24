@@ -215,7 +215,8 @@ class BaseIntrospector(object):
             (str, factory.Declaration) list: the new declarations.
         """
         declarations = {}
-        for field_name in for_fields:
+        # Must sort fields for deterministic ordering
+        for field_name in sorted(for_fields):
             if field_name in skip_fields:
                 continue
 
